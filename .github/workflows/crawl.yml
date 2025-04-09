@@ -85,6 +85,11 @@ jobs:
           name: crawl-output
 
       - name: Upload to IA
+        run: |
+          ls -lah .
+          ls -lah ./*
+
+      - name: Upload to IA
         env:
           IAS3_ACCESS_KEY: '${{ secrets.IAS3_ACCESS_KEY }}'
           IAS3_SECRET_KEY: '${{ secrets.IAS3_SECRET_KEY }}'
