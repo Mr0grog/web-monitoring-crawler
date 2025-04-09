@@ -83,11 +83,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: crawl-output
-
-      - name: Upload to IA
-        run: |
-          ls -lah .
-          ls -lah ./*
+          path: crawls/output
 
       - name: Upload to IA
         env:
@@ -95,7 +91,7 @@ jobs:
           IAS3_SECRET_KEY: '${{ secrets.IAS3_SECRET_KEY }}'
         run: |
           collection='${{ needs.crawl.outputs.collection }}'
-          base_path='${{ needs.crawl.outputs.collection_path }}'
+          base_path='./crawls/output'
 
           nice_name="$(
             echo "${collection}" \
