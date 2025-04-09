@@ -57,7 +57,7 @@ jobs:
       - name: Upload to workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: ${{ steps.setup-collection.outputs.path }}'
+          path: '${{ steps.setup-collection.outputs.path }}'
           retention-days: 7
 
   import-db:
