@@ -41,13 +41,11 @@ jobs:
 
       - name: Get seeds
         run: |
-          echo 'TODO: load seeds from DB instead of this test set'
-          state_path='${{ steps.setup-collection.outputs.path}}/crawls/'
-          mkdir -p "${state_path}"
-          cp test.crawl.yaml "${state_path}"
+          echo 'TODO: load seeds from DB'
 
       - name: Crawl
         run: |
+          # TODO: use seeds from DB instead of this test set
           ./crawl.sh ./test.crawl.yaml '${{ steps.setup-collection.outputs.name }}'
 
       - name: Upload to S3
