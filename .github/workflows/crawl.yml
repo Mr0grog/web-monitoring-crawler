@@ -113,11 +113,12 @@ jobs:
             echo "${collection}" \
             | sed -E 's/^.*--([0-9]{4})([0-9]{2})([0-9]{2}).*/\1-\2-\3/'
           )"
-          uvx --from internetarchive ia upload \
-              --metadata="mediatype:web" \
-              --metadata="title:${nice_name} ${iso_date}" \
-              --metadata="date:${iso_date}" \
-              "${collection}" \
-              ${base_path}/archive/* \
-              ${base_path}/logs/* \
-              ${base_path}/pages/*
+          echo "title:${nice_name} ${iso_date}"
+          # uvx --from internetarchive ia upload \
+          #     --metadata="mediatype:web" \
+          #     --metadata="title:${nice_name} ${iso_date}" \
+          #     --metadata="date:${iso_date}" \
+          #     "${collection}" \
+          #     ${base_path}/archive/* \
+          #     ${base_path}/logs/* \
+          #     ${base_path}/pages/*
