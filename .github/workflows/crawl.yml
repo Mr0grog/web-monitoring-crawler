@@ -35,7 +35,7 @@ jobs:
           timestamp="$(date +'%Y%m%d%H%M%S')"
 
           collection="test-crawl-${timestamp}"
-          collection_path="./crawls/collections/${collection}"
+          collection_path="crawls/collections/${collection}"
           echo "name=${collection}" >> "$GITHUB_OUTPUT"
           echo "path=${collection_path}" >> "$GITHUB_OUTPUT"
 
