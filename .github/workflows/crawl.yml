@@ -53,7 +53,7 @@ jobs:
       - name: Get active seeds
         if: ${{ !inputs.test_seeds }}
         env:
-          WEB_MONITORING_DB_USER: '${{ secrets.WEB_MONITORING_DB_USER }}'
+          WEB_MONITORING_DB_EMAIL: '${{ secrets.WEB_MONITORING_DB_EMAIL }}'
           WEB_MONITORING_DB_PASSWORD: '${{ secrets.WEB_MONITORING_DB_PASSWORD }}'
         run: |
           uv run edgi-wm-crawler seeds --format browsertrix > seeds.crawl.yaml
@@ -119,7 +119,7 @@ jobs:
 
       - name: Import to web-monitoring-db
         env:
-          WEB_MONITORING_DB_USER: '${{ secrets.WEB_MONITORING_DB_USER }}'
+          WEB_MONITORING_DB_EMAIL: '${{ secrets.WEB_MONITORING_DB_EMAIL }}'
           WEB_MONITORING_DB_PASSWORD: '${{ secrets.WEB_MONITORING_DB_PASSWORD }}'
           WEB_MONITORING_DB_S3_BUCKET: '${{ secrets.WEB_MONITORING_DB_S3_BUCKET }}'
           DRY_RUN_OPTION: ${{ needs.crawl.outputs.save_results == 'false' && '--dry-run' || '' }}
