@@ -494,8 +494,8 @@ wheels = [
 
 [[package]]
 name = "web-monitoring"
-version = "0+untagged.1131.g23d6b83"
-source = { git = "https://github.com/edgi-govdata-archiving/web-monitoring-processing.git?rev=main#23d6b83e4caa723dde1c1b2aa45148015d94d0f3" }
+version = "0.1.dev1132+gacae332"
+source = { git = "https://github.com/edgi-govdata-archiving/web-monitoring-processing.git?rev=main#acae332c1ed9c0c04363bcbaf16c124fc96167a5" }
 dependencies = [
     { name = "brotli" },
     { name = "cchardet" },
