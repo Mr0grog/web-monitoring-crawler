@@ -22,6 +22,8 @@ concurrency:
 
 env:
   BROWSERTRIX_IMAGE: 'webrecorder/browsertrix-crawler:1.5.11'
+  COLLECTION_NAME_BASE: 'edgi-active-urls'
+  COLLECTION_TITLE_BASE: 'EDGI Web Monitoring Crawl'
 
 jobs:
   crawl:
@@ -72,7 +74,7 @@ jobs:
           timestamp="$(date +'%Y%m%d%H%M%S')"
 
           # Important: double dash will be used later to make the name nicer.
-          collection="test-crawl--${timestamp}"
+          collection="${COLLECTION_NAME_BASE}--${timestamp}"
           collection_path="crawls/collections/${collection}"
           echo "name=${collection}" >> "$GITHUB_OUTPUT"
           echo "path=${collection_path}" >> "$GITHUB_OUTPUT"
@@ -154,21 +156,15 @@ jobs:
         id: options
         run: |
           collection='${{ needs.crawl.outputs.collection }}'
-
-          nice_name="$(
-            echo "${collection}" \
-            | sed -E 's/^(.*)--([0-9]{4})([0-9]{2})([0-9]{2}).*/\1/' \
-            | sed -E 's/-/ /' \
-            | sed -E 's/[[:alnum:]]+/\u&/g'
-          )"
           iso_date="$(
             echo "${collection}" \
             | sed -E 's/^.*--([0-9]{4})([0-9]{2})([0-9]{2}).*/\1-\2-\3/'
           )"
+          title="${COLLECTION_TITLE_BASE} ${iso_date}"
 
           echo "identifier=${collection}" >> "$GITHUB_OUTPUT"
           echo "iso_date=${iso_date}" >> "$GITHUB_OUTPUT"
-          echo "title=${nice_name} ${iso_date}" >> "$GITHUB_OUTPUT"
+          echo "title=${title}" >> "$GITHUB_OUTPUT"
 
       # The IA CLI does not currently support env vars (it used to), so manually
       # write a config file.
