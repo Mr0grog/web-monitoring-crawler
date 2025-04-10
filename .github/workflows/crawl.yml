@@ -11,6 +11,10 @@ on:
         description: 'Dry run: report planned work, but do not actually upload or change anything'
         type: boolean
         default: true
+      test_seeds:
+        description: 'Use test seeds'
+        type: boolean
+        default: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
@@ -30,6 +34,27 @@ jobs:
       save_results: ${{ env.SAVE_RESULTS }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Get test seeds
+        if: ${{ inputs.test_seeds }}
+        run: |
+          cp test.crawl.yaml seeds.crawl.yaml
+
+      - name: Get active seeds
+        if: ${{ !inputs.test_seeds }}
+        env:
+          WEB_MONITORING_DB_USER: '${{ secrets.WEB_MONITORING_DB_USER }}'
+          WEB_MONITORING_DB_PASSWORD: '${{ secrets.WEB_MONITORING_DB_PASSWORD }}'
+        run: |
+          uv run edgi-wm-crawler seeds --format browsertrix > seeds.crawl.yaml
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -52,14 +77,9 @@ jobs:
           echo "name=${collection}" >> "$GITHUB_OUTPUT"
           echo "path=${collection_path}" >> "$GITHUB_OUTPUT"
 
-      - name: Get seeds
-        run: |
-          echo 'TODO: load seeds from DB'
-
       - name: Crawl
         run: |
-          # TODO: use seeds from DB instead of this test set
-          ./crawl.sh ./test.crawl.yaml '${{ steps.setup-collection.outputs.name }}'
+          ./crawl.sh ./seeds.crawl.yaml '${{ steps.setup-collection.outputs.name }}'
 
       - name: Upload to S3
         if: ${{ env.SAVE_RESULTS == 'true' }}
@@ -80,8 +100,15 @@ jobs:
       - crawl
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras --dev
 
       - uses: actions/download-artifact@v4
         with:
@@ -97,7 +124,7 @@ jobs:
         run: |
           collection='${{ needs.crawl.outputs.collection }}'
 
-          uvx --python 3.10.16 --from git+https://github.com/edgi-govdata-archiving/web-monitoring-processing wm-warc-import \
+          uv run wm-warc-import \
             --archive-s3 "${WEB_MONITORING_DB_S3_BUCKET}" \
             --seeds "crawl/crawls/config.${collection}.yaml" \
             ${{ env.DRY_RUN_OPTION }} \
@@ -108,8 +135,15 @@ jobs:
       - crawl
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras --dev
 
       - uses: actions/download-artifact@v4
         with:
@@ -152,7 +186,7 @@ jobs:
       - name: Upload to IA
         if: ${{ needs.crawl.outputs.save_results == 'true' }}
         run: |
-          uvx --from internetarchive ia upload \
+          uv run ia upload \
               --metadata="mediatype:web" \
               --metadata="title:${{ steps.options.outputs.title }}" \
               --metadata="date:${{ steps.options.outputs.iso_date }}" \

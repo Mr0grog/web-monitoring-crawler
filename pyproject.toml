@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-crawler = "edgi_wm_crawler:main"
+edgi-wm-crawler = "edgi_wm_crawler:main"
 
 [build-system]
 requires = ["hatchling"]
