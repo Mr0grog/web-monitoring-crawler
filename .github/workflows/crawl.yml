@@ -80,11 +80,12 @@ jobs:
           echo "path=${collection_path}" >> "$GITHUB_OUTPUT"
 
       - name: Crawl
+        continue-on-error: true
         run: |
           ./crawl.sh ./seeds.crawl.yaml '${{ steps.setup-collection.outputs.name }}'
 
       - name: Upload to S3
-        if: ${{ env.SAVE_RESULTS == 'true' }}
+        if: ${{ !failure() && env.SAVE_RESULTS == 'true' }}
         run: |
           aws s3 cp --recursive \
             '${{ steps.setup-collection.outputs.path }}' \
@@ -96,6 +97,11 @@ jobs:
           name: crawl-output
           path: '${{ steps.setup-collection.outputs.path }}'
           retention-days: 7
+
+      - name: Fail if crawl failed
+        if: ${{ failure() }}
+        run: |
+          false
 
   import-db:
     needs:
