@@ -1,10 +1,16 @@
 name: Crawl
 
 on:
-  workflow_dispatch: {}
   schedule:
     # 5:30pm Pacific on M/W/F
     - cron: '30 0 * * 2,4,6'
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: report planned work, but do not actually upload or change anything'
+        type: boolean
+        default: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
@@ -16,9 +22,12 @@ env:
 jobs:
   crawl:
     runs-on: ubuntu-latest
+    env:
+      SAVE_RESULTS: ${{ (github.event_name == 'schedule' || inputs.dry_run == false) && 'true' || 'false' }}
     outputs:
       collection: ${{ steps.setup-collection.outputs.name }}
       collection_path: ${{ steps.setup-collection.outputs.path }}
+      save_results: ${{ env.SAVE_RESULTS }}
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +62,7 @@ jobs:
           ./crawl.sh ./test.crawl.yaml '${{ steps.setup-collection.outputs.name }}'
 
       - name: Upload to S3
+        if: ${{ env.SAVE_RESULTS == 'true' }}
         run: |
           aws s3 cp --recursive \
             '${{ steps.setup-collection.outputs.path }}' \
@@ -83,6 +93,7 @@ jobs:
           WEB_MONITORING_DB_USER: '${{ secrets.WEB_MONITORING_DB_USER }}'
           WEB_MONITORING_DB_PASSWORD: '${{ secrets.WEB_MONITORING_DB_PASSWORD }}'
           WEB_MONITORING_DB_S3_BUCKET: '${{ secrets.WEB_MONITORING_DB_S3_BUCKET }}'
+          DRY_RUN_OPTION: ${{ needs.crawl.outputs.save_results == 'false' && '--dry-run' || '' }}
         run: |
           collection='${{ needs.crawl.outputs.collection }}'
           base_path='./crawl'
@@ -90,7 +101,7 @@ jobs:
           uvx --from git+https://github.com/edgi-govdata-archiving/web-monitoring-processing wm-warc-import \
             --archive-s3 "${WEB_MONITORING_DB_S3_BUCKET}" \
             --seeds "${base_path}/crawls/config.${collection}.yaml" \
-            --dry-run \
+            ${{ env.DRY_RUN_OPTION }} \
             ${base_path}/archive/*.warc.gz
 
   upload-ia:
@@ -134,12 +145,18 @@ jobs:
             echo "${collection}" \
             | sed -E 's/^.*--([0-9]{4})([0-9]{2})([0-9]{2}).*/\1-\2-\3/'
           )"
-          echo "title:${nice_name} ${iso_date}"
-          # uvx --from internetarchive ia upload \
-          #     --metadata="mediatype:web" \
-          #     --metadata="title:${nice_name} ${iso_date}" \
-          #     --metadata="date:${iso_date}" \
-          #     "${collection}" \
-          #     ${base_path}/archive/* \
-          #     ${base_path}/logs/* \
-          #     ${base_path}/pages/*
+          title="${nice_name} ${iso_date}"
+          echo "Item title: ${title}"
+
+          if [[ '${{ needs.crawl.outputs.save_results }}' == 'true' ]]; then
+            uvx --from internetarchive ia upload \
+                --metadata="mediatype:web" \
+                --metadata="title:${title}" \
+                --metadata="date:${iso_date}" \
+                "${collection}" \
+                ${base_path}/archive/* \
+                ${base_path}/logs/* \
+                ${base_path}/pages/*
+          else
+            echo 'Dry run: skipping upload'
+          fi
