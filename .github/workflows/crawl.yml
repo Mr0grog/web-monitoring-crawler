@@ -80,28 +80,25 @@ jobs:
           echo "path=${collection_path}" >> "$GITHUB_OUTPUT"
 
       - name: Crawl
-        continue-on-error: true
+        id: crawl
         run: |
           ./crawl.sh ./seeds.crawl.yaml '${{ steps.setup-collection.outputs.name }}'
 
       - name: Upload to S3
-        if: ${{ !failure() && env.SAVE_RESULTS == 'true' }}
+        if: ${{ success() && env.SAVE_RESULTS == 'true' }}
         run: |
           aws s3 cp --recursive \
             '${{ steps.setup-collection.outputs.path }}' \
             's3://${{ secrets.CRAWLER_S3_BUCKET }}/${{ steps.setup-collection.outputs.name }}'
 
+      # Still want to save artifacts if the crawl fails (so we can investigate)
       - name: Upload to workflow artifacts
+        if: ${{ success() || steps.crawl.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
           name: crawl-output
           path: '${{ steps.setup-collection.outputs.path }}'
           retention-days: 7
-
-      - name: Fail if crawl failed
-        if: ${{ failure() }}
-        run: |
-          false
 
   import-db:
     needs:
