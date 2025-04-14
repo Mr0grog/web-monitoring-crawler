@@ -1,9 +1,18 @@
 name: Crawl
 
 on:
-  schedule:
-    # 5:30pm Pacific on M/W/F
-    - cron: '30 0 * * 2,4,6'
+  # Disable scheduled crawls for now. This works surprisingly well for crawls
+  # up to about 2k URLs (I figured it would get blocked, but no!), but the
+  # standard actions runners just don't have enough disk space for more.
+  #
+  # TODO: look into fanning out a matrix of jobs for subsets of URLs to get
+  # around the disk space issue. Need to change the DB import and IA upload
+  # parts to be inside the matrix job and work with just a piece of the full
+  # crawl.
+  #
+  # schedule:
+  #   # 5:30pm Pacific on M/W/F
+  #   - cron: '30 0 * * 2,4,6'
 
   workflow_dispatch:
     inputs:
