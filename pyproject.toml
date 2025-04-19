@@ -7,7 +7,7 @@ authors = [
     { name = "Rob Brackett", email = "rob@robbrackett.com" },
     { name = "Environmental Data Governance Initiative", email = "EnviroDGI@protonmail.com" },
 ]
-requires-python = ">=3.10, <3.11"
+requires-python = ">=3.12"
 dependencies = [
     "internetarchive ~=5.3.1",
     "web_monitoring @ git+https://github.com/edgi-govdata-archiving/web-monitoring-processing.git@main"

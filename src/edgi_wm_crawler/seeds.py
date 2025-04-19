@@ -1,7 +1,7 @@
 from collections import defaultdict
 from itertools import chain
 import re
-from typing import Generator, Iterable
+from typing import Any, Generator, Iterable, Literal
 from urllib.parse import urlparse
 import yaml
 from web_monitoring.db import Client as DbClient
@@ -73,14 +73,14 @@ def format_text(urls: Iterable[str]) -> str:
     )
 
 
-def format_browsertrix(urls: Iterable[str], *, workers: int = 4) -> str:
+def format_browsertrix(urls: Iterable[str], *, workers: int = 4, **options: Any) -> str:
     # Do some funky sorting to optimize for Browsertrix. We want arcgis URLs
     # all together or in a separate crawl because they tend to put a huge
     # amount of memory pressure on the browser, causing hangs or crashes.
     #
     # For other URLs we interleave the domains so that each one is receiving
     # a minimal rate of requests and we are less likely to trip crawl blockers.
-    groups = group_by_domain(urls)
+    groups = group_urls(urls, by='domain')
     arcgis = groups.pop('arcgis', [])
     sorted_urls = chain(arcgis, interleave(*groups.values()))
 
@@ -105,19 +105,28 @@ def format_browsertrix(urls: Iterable[str], *, workers: int = 4) -> str:
         'warcinfo': {
             'operator': '"Environmental Data & Governance Initiative" <contact@envirodatagov.org>'
         },
+        **options,
         'seeds': seeds
     })
 
 
-def group_by_domain(urls: Iterable[str]) -> dict[str, list[str]]:
+def group_urls(
+    urls: Iterable[str],
+    by: Literal['host', 'domain'] = 'domain'
+) -> dict[str, list[str]]:
     url_groups: dict[str, list[str]] = defaultdict(list)
     for url in urls:
         parsed = urlparse(url)
         assert parsed.hostname, f'No hostname: "{url}"'
 
-        group = '.'.join(parsed.hostname.split('.')[-2:])
-        if 'arcgis' in parsed.hostname:
-            group = 'arcgis'
+        if by == 'host':
+            group = parsed.hostname
+        elif by == 'domain':
+            group = '.'.join(parsed.hostname.split('.')[-2:])
+            if 'arcgis' in parsed.hostname:
+                group = 'arcgis'
+        else:
+            raise ValueError('"by" must be "host" or "domain"')
 
         url_groups[group].append(url)
 
